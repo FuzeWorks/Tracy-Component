@@ -1,0 +1,22 @@
+# Ignore Coffee/Espresso. We only want chocolate
+FuzeWorks.esproj/*
+
+# Ignore PHP Storm
+.idea/
+
+# Development files
+test.php
+
+# Generic Files
+*~
+*.lock
+*.DS_Store
+*.swp
+*.out
+
+# Build Files
+vendor/
+build/
+doc
+nbproject
+._*
