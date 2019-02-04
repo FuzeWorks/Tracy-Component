@@ -57,7 +57,7 @@ class TracyComponent implements iComponent
      *
      * @var bool $enableTracy
      */
-    protected $enableTracy = true;
+    protected static $enableTracy = true;
 
     public function getName(): string
     {
@@ -80,7 +80,7 @@ class TracyComponent implements iComponent
     public function onCreateContainer(Factory $container)
     {
         // If Tracy should not be enabled, escape
-        if ($this->enableTracy == false)
+        if (self::$enableTracy == false)
         {
             Logger::logInfo("TracyComponent added but not enabled.");
             return;
@@ -156,9 +156,9 @@ class TracyComponent implements iComponent
      *
      * Has no effect after container is created
      */
-    public function enableTracy()
+    public static function enableTracy()
     {
-        $this->enableTracy = true;
+        self::$enableTracy = true;
     }
 
     /**
@@ -166,9 +166,9 @@ class TracyComponent implements iComponent
      *
      * Has no effect after container is created
      */
-    public function disableTracy()
+    public static function disableTracy()
     {
-        $this->enableTracy = false;
+        self::$enableTracy = false;
     }
 
     /**
@@ -176,8 +176,8 @@ class TracyComponent implements iComponent
      *
      * @return bool
      */
-    public function isEnabled(): bool
+    public static function isEnabled(): bool
     {
-        return $this->enableTracy;
+        return self::$enableTracy;
     }
 }
