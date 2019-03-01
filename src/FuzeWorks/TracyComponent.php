@@ -59,6 +59,13 @@ class TracyComponent implements iComponent
      */
     protected static $enableTracy = true;
 
+    /**
+     * Set to true after tracy has been started
+     *
+     * @var bool $enabled
+     */
+    protected static $enabled = false;
+
     public function getName(): string
     {
         return 'TracyComponent';
@@ -88,7 +95,13 @@ class TracyComponent implements iComponent
 
         // Disable screenLog
         Events::addListener(function($event){
-            $event->setCancelled(true);
+            if (self::$enableTracy)
+            {
+                $event->setCancelled(true);
+                Logger::log("Cancelled FuzeWorks\Logger output");
+            }
+            else
+                Logger::log("Tracy is running but configured to not intercept FuzeWorks output. Ignoring...");
         }, 'screenLogEvent');
 
         // Enable Tracy. Use DEVELOPMENT mode when logger is enabled
@@ -103,6 +116,7 @@ class TracyComponent implements iComponent
         // Enable bridges
         GitTracyBridge::register();
         LoggerTracyBridge::register();
+        self::$enabled = true;
     }
 
     /**
@@ -178,6 +192,6 @@ class TracyComponent implements iComponent
      */
     public static function isEnabled(): bool
     {
-        return self::$enableTracy;
+        return self::$enabled;
     }
 }
