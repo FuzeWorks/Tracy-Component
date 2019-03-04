@@ -35,6 +35,7 @@
  */
 
 namespace FuzeWorks;
+use FuzeWorks\Exception\EventException;
 use FuzeWorks\Exception\InvalidArgumentException;
 use Tracy\Debugger;
 
@@ -82,7 +83,7 @@ class TracyComponent implements iComponent
      * Enables Tracy when requested to do so. Disables FuzeWorks Logger.
      *
      * @param Factory $container
-     * @throws Exception\EventException
+     * @throws EventException
      */
     public function onCreateContainer(Factory $container)
     {
@@ -93,30 +94,41 @@ class TracyComponent implements iComponent
             return;
         }
 
-        // Disable screenLog
-        Events::addListener(function($event){
-            if (self::$enableTracy)
-            {
-                $event->setCancelled(true);
-                Logger::log("Cancelled FuzeWorks\Logger output");
-            }
-            else
-                Logger::log("Tracy is running but configured to not intercept FuzeWorks output. Ignoring...");
-        }, 'screenLogEvent');
-
         // Enable Tracy. Use DEVELOPMENT mode when logger is enabled
-        if ($container->logger->isEnabled() == true)
+        $debuggerEnabled = $container->logger->isEnabled();
+        if ($debuggerEnabled)
             Debugger::enable(Debugger::DEVELOPMENT, realpath(Core::$logDir));
         else
             Debugger::enable(Debugger::PRODUCTION, realpath(Core::$logDir));
 
         // Disable FuzeWorks Logger
-        $container->logger->disable();
+        Logger::disableScreenLog();
+
+        // Reset exception handlers
+        set_error_handler(array('\FuzeWorks\Core', 'errorHandler'), E_ALL);
+        set_exception_handler(array('\FuzeWorks\Core', 'exceptionHandler'));
+
+        // Register exception handler
+        Core::addErrorHandler(['\Tracy\Debugger', 'errorHandler'], Priority::LOW);
+
+        // Tracy has an annoying default error 500 page.
+        // This page will be suppressed when in production mode.
+        if ($debuggerEnabled)
+        {
+            Core::addExceptionHandler(['\Tracy\Debugger', 'exceptionHandler'], Priority::LOW);
+        }
+        else
+            Core::addExceptionHandler([$this, 'exceptionHandler'], Priority::LOW);
 
         // Enable bridges
         GitTracyBridge::register();
         LoggerTracyBridge::register();
         self::$enabled = true;
+    }
+
+    public function exceptionHandler($exception, $exit = true)
+    {
+        Debugger::getLogger()->log($exception, \Tracy\Logger::EXCEPTION);
     }
 
     /**
